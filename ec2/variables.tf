@@ -139,5 +139,5 @@ variable "high_mem_alarm" {
 locals {
   ami_id = var.os == "ubuntu" ? data.aws_ami.ubuntu.id : var.os == "rhel" ? data.aws_ami.rhel.id : null
 
-  user_data = var.sudo ? templatefile("${path.module}/user_data/user_data_sudo.tmpl", { ssh_user = var.ssh_user, pub_key = var.pub_key } : templatefile("${path.module}/user_data/user_data.tmpl", { ssh_user = var.ssh_user, pub_key = var.pub_key })
+  user_data = var.sudo ? templatefile("${path.module}/user_data/user_data_sudo.tmpl", { ssh_user = var.ssh_user, pub_key = var.pub_key }) : templatefile("${path.module}/user_data/user_data.tmpl", { ssh_user = var.ssh_user, pub_key = var.pub_key })
 }

@@ -1,5 +1,11 @@
 # web_app_terraform
 
+## Assumptions:
+- you have an admin IAM user stored in /.aws credentials file that has cross account access to all enterprise accounts
+- there are roles in all accounts in which this user can assume
+
+In the providers.tf file on the root of this module you can specify which account and role you want to assume, so that you can run this module on any account you should choose
+
 **NOTE:** *normally I would use variable validation, but this is also not yet available in TF 12*
 
 ## VPC Module
@@ -16,7 +22,7 @@ dns_hostnames | bool | bool flag that enables or disables dns hostnames on your 
 instance_tenancy | string | tenancy options for ec2's launched within VPC, default is "default" other valid options are "dedicated or "host"|
 enable_classiclink | bool | bool flag to enable classiclink inside vpc|
 enable_classiclink_dns | bool | bool to enable classiclink dns inside vpc |  
-subnets | map of objects | map of objects to create subnets, appropriate attributes are: <ui><li>**subnet_name (string)** *subnet name*</li><li>**public (bool)***bool flag to enable or disable public subnets*</li><li>**newbits(number)***is the number of additional bits with which to extend the prefix*</li><li>**netnum(number)***is a whole number that can be represented as a binary integer with no more than newbits binary digits, which will be used to populate the additional bits added to the prefix*</li></ui> | 
+subnets | map of objects | map of objects to create subnets, appropriate attributes are: <ui><li>**subnet_name (string)** *subnet name*</li><li>**public (bool)** *bool flag to enable or disable public subnets*</li><li>**newbits(number)** *is the number of additional bits with which to extend the prefix*</li><li>**netnum(number)** *is a whole number that can be represented as a binary integer with no more than newbits binary digits, which will be used to populate the additional bits added to the prefix*</li></ui> | 
 
 ## EC2 Module
 
