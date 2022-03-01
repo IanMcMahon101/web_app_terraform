@@ -13,11 +13,6 @@ variable "vpc_id" {
   default = ""
 }
 
-variable "create_webapp" {
-  type    = bool
-  default = true
-}
-
 variable "os" {
   type    = string
   default = ""
@@ -51,6 +46,16 @@ variable "pub_key" {
   description = "domain group that will allow ssh access"
 }
 
+variable "key_name" {
+  type = string
+  default = ""
+}
+
+variable "sudo" {
+  type = bool
+  default = false
+}
+
 variable "ssh_cidr_blocks" {
   type    = list(string)
   default = []
@@ -72,8 +77,8 @@ variable "root_volume_size" {
 }
 
 variable "ebs_volume_type" {
-  type    = string
-  default = ""
+  type    = number
+  default = 10
 }
 
 variable "ebs_volume_size" {
@@ -96,18 +101,43 @@ variable "asg_desired" {
   default = 1
 }
 
-variable "adj_type_up" {
+variable "eip_ip" {
   type    = string
   default = ""
 }
 
-variable "adj_type_down" {
-  type    = string
-  default = ""
+variable "as_pol" {
+  type = map(object({
+    name               = string
+    scaling_adjustment = number
+    adj_type           = string
+    cooldown           = number
+  }))
+}
+
+variable "alb" {
+  type = map(object({
+    name    = string
+    protect = bool
+  }))
+}
+
+variable "high_mem_alarm" {
+  type = map(object({
+    name        = string
+    comp_op     = string
+    eval_per    = string
+    namespace   = string
+    metric_name = string
+    period      = number
+    statistic   = string
+    threshold   = string
+    description = string
+  }))
 }
 
 locals {
   ami_id = var.os == "ubuntu" ? data.aws_ami.ubuntu.id : var.os == "rhel" ? data.aws_ami.rhel.id : null
 
-  user_data = templatefile("${path.module}/user_data/user_data.tmpl", { ssh_user = var.ssh_user, pub_key = var.pub_key })
+  user_data = var.sudo ? templatefile("${path.module}/user_data/user_data_sudo.tmpl", { ssh_user = var.ssh_user, pub_key = var.pub_key } : templatefile("${path.module}/user_data/user_data.tmpl", { ssh_user = var.ssh_user, pub_key = var.pub_key })
 }

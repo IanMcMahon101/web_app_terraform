@@ -7,3 +7,6 @@ output "private_subnet" {
 output "vpc_id" {
   value = aws_vpc.vpc.id
 }
+output "eip_id" {
+  value = aws_eip.lb_eip.id
+}

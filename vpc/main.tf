@@ -57,6 +57,18 @@ resource "aws_eip" "eip" {
   )
 }
 
+resource "aws_eip" "lb_eip" {
+  count = var.create_vpc ? 1 : 0
+  vpc   = var.create_vpc
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.vpc_name}-lb-eip"
+    }
+  )
+}
+
 ########################
 #
 #    Public Subnets

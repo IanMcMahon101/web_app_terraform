@@ -60,6 +60,7 @@ data "aws_subnet" "public" {
 resource "aws_kms_key" "kms" {
   count       = var.create_webapp ? 1 : 0
   description = "KMS key for instance volumes"
+
 }
 
 resource "aws_kms_alias" "kms_a" {
@@ -146,11 +147,11 @@ resource "aws_ebs_default_kms_key" "key" {
 }
 
 resource "aws_launch_configuration" "lc" {
-  count         = var.create_webapp ? 1 : 0
   name          = var.lc_name
   image_id      = local.ami_id
   instance_type = var.instance_type
   user_data     = local.user_data
+  key_name = var.key_name
   security_groups = [
     aws_security_group.ec2.id,
 
@@ -182,21 +183,16 @@ resource "aws_autoscaling_group" "grp" {
 
 }
 
-resource "aws_autoscaling_policy" "scale-up" {
-  name                   = "scale-up"
-  autoscaling_group_name = aws_autoscaling_group.grp.name
-  scaling_adjustment     = 1
-  adjustment_type        = var.adj_type_up
-  cooldown               = 300
+## using a for each loop with an object variable allows for greater customization on resources that can have many options
 
-}
-
-resource "aws_autoscaling_policy" "scale-down" {
-  name                   = "scale-down"
+resource "aws_autoscaling_policy" "scale" {
+  for_each               = var.as_pol
+  name                   = each.value.name
   autoscaling_group_name = aws_autoscaling_group.grp.name
-  scaling_adjustment     = -1
-  adjustment_type        = var.adj_type_down
-  cooldown               = 300
+  scaling_adjustment     = each.value.scaling_adjustment
+  adjustment_type        = each.value.adj_type
+  cooldown               = each.value.cooldown
+
 }
 
 ########################
@@ -205,4 +201,50 @@ resource "aws_autoscaling_policy" "scale-down" {
 #
 ########################
 
+resource "aws_lb" "lb" {
+  for_each           = var.alb
+  name               = each.value.name
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.pub_lb.id]
 
+  subnet_mapping = {
+    subnet_id     = var.public_subnet_id
+    allocation_id = var.eip_id
+  }
+
+  enable_deletion_protection = each.value.protect
+}
+
+resource "aws_lb_target_group" "tg" {
+  for_each = var.alb
+  name     = "${each.value.name}-target-group"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+}
+
+resource "aws_autoscaling_attachment" "asg_attachment_bar" {
+  for_each               = var.alb
+  autoscaling_group_name = aws_autoscaling_group.grp.id
+  alb_target_group_arn   = aws_lb_target_group.tf[each.key].arn
+}
+
+########################
+#
+#      CW Alarms
+#
+########################
+
+resource "aws_cloudwatch_metric_alarm" "alarm" {
+  for_each            = var.high_mem_alarm
+  alarm_name          = each.value.name
+  comparison_operator = each.value.comp_op
+  evaluation_periods  = each.value.eval_per
+  metric_name         = each.value.metric_name
+  namespace           = each.value.namespace
+  period              = each.value.period
+  statistic           = each.value.statistic
+  threshold           = each.value.threshold
+  alarm_description   = each.value.description
+}

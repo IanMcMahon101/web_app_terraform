@@ -5,7 +5,10 @@ SSHKEY=${pub_key}
 
 # add user and give them sudo
 adduser --disabled-password $USER
+usermod -a -G sudo $USER
 
+# ensures no pwd required for sudo access
+echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/90-cloud-init-users
 
 # add users key for ssh access
 echo "$SSHKEY" >> /home/$USER/.ssh/authorized_keys
